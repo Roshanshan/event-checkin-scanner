@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#071b16">
+  <title>Event Check-in Scanner</title>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <style>
+    :root{--bg:#071b16;--card:#fff;--ink:#0f172a;--muted:#64748b;--line:#dbe4ea;--green:#087a49;--green2:#10a766;--greenSoft:#ecfdf5;--red:#b42318;--redSoft:#fff1f0;--amber:#9a6700;--amberSoft:#fff8e6}
+    *{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Inter,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;color:var(--ink);background:#f4f7f8}
+    button,input,select{font:inherit}.app{width:100%;max-width:560px;min-height:100vh;margin:auto;background:#f4f7f8}
+    header{padding:calc(18px + env(safe-area-inset-top)) 18px 18px;background:linear-gradient(145deg,#05271e,#0b6b4a);color:#fff}
+    .top{display:flex;align-items:center;justify-content:space-between;gap:10px}.brand{font-size:12px;font-weight:950;letter-spacing:.14em;text-transform:uppercase;color:#b7ead3}
+    .status{padding:7px 10px;border-radius:999px;background:#ffffff1f;font-size:11px;font-weight:900}.status.ready{color:#d1fae5}.status.scan{color:#fff;background:#10a76659}.status.error{color:#fee2e2;background:#b4231859}
+    h1{margin:12px 0 4px;font-size:29px;line-height:1.05;letter-spacing:-.04em}.sub{margin:0;color:#d5f1e3;font-size:14px}
+    main{padding:16px 14px 30px}.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:0 10px 30px #0f172a12}
+    .field{margin-top:14px}.field label{display:block;margin-bottom:7px;font-size:11px;font-weight:950;letter-spacing:.06em}.field input,.field select{width:100%;height:52px;border:1.5px solid var(--line);border-radius:13px;padding:0 14px;outline:none;background:#fff}.field input:focus,.field select:focus{border-color:var(--green2);box-shadow:0 0 0 4px #10a7661f}
+    .primary{width:100%;min-height:54px;margin-top:16px;border:0;border-radius:14px;background:linear-gradient(110deg,var(--green),var(--green2));color:#fff;font-weight:950;cursor:pointer}.primary:disabled{opacity:.55;cursor:not-allowed}.secondary{min-height:46px;border:1px solid var(--line);border-radius:12px;background:#f8fafc;color:var(--ink);padding:0 14px;font-weight:900;cursor:pointer}.hidden{display:none!important}.hint{color:var(--muted);font-size:12px;line-height:1.55}
+    .staffBar{display:flex;align-items:center;justify-content:space-between;gap:12px}.staffName{font-size:18px;font-weight:950}.staffMeta{margin-top:3px;color:var(--muted);font-size:12px;font-weight:750}
+    .scannerCard{margin-top:14px;padding:10px;background:#020817;border-radius:22px;overflow:hidden;box-shadow:0 18px 45px #02081747}#reader{width:100%;min-height:330px;border:0!important;border-radius:17px;overflow:hidden;background:#020817}#reader video{width:100%!important;height:auto!important;min-height:330px;object-fit:cover;border-radius:17px}#reader img{display:none!important}#reader__scan_region{border:0!important}#reader__dashboard{padding:10px 4px!important;color:#fff!important}#reader__dashboard_section_swaplink{display:none!important}
+    .scanInstruction{padding:14px 8px 4px;color:#cbd5e1;text-align:center;font-size:12px;line-height:1.5}.scanInstruction strong{display:block;color:#fff;font-size:15px;margin-bottom:3px}
+    .result{margin-top:14px;padding:20px;border-radius:20px;border:1px solid}.result.ok{background:var(--greenSoft);border-color:#b7ecd2}.result.bad{background:var(--redSoft);border-color:#f3c1bc}.result.warn{background:var(--amberSoft);border-color:#f1d490}.resultIcon{font-size:42px;line-height:1;font-weight:950}.resultTitle{margin-top:7px;font-size:25px;font-weight:950;letter-spacing:-.03em}.holder{margin-top:14px;font-size:22px;font-weight:950}.resultMeta{margin-top:7px;color:#334155;font-size:14px;line-height:1.6}.mono{font-family:"Courier New",monospace;font-weight:850;overflow-wrap:anywhere}.nextButton{margin-top:12px}.footer{padding:15px 0 calc(10px + env(safe-area-inset-bottom));color:#94a3b8;text-align:center;font-size:11px;line-height:1.5}.errorBox{margin-top:14px;padding:14px;border-radius:14px;background:var(--redSoft);border:1px solid #f3c1bc;color:var(--red);font-size:13px;line-height:1.5}
+    @media(max-width:380px){h1{font-size:25px}#reader,#reader video{min-height:280px}}
+  </style>
+</head>
+<body>
+<div class="app">
+<header><div class="top"><div class="brand">Event Check-in</div><div id="connection" class="status ready">● READY</div></div><h1>Fast Entry</h1><p class="sub">Scan admission tickets instantly</p></header>
+<main>
+<section id="loginView" class="card">
+  <h2 style="margin:0;font-size:22px">Staff sign-in</h2>
+  <p class="hint">Enter the Staff ID and PIN configured in the Staff sheet.</p>
+  <div class="field"><label for="staffId">STAFF ID</label><input id="staffId" autocomplete="username" maxlength="40" placeholder="ST01"></div>
+  <div class="field"><label for="pin">PIN</label><input id="pin" type="password" inputmode="numeric" autocomplete="current-password" maxlength="20" placeholder="Enter PIN"></div>
+  <div class="field"><label for="gate">GATE</label><select id="gate"><option>Gate A</option><option>Gate B</option><option>Gate C</option><option>Main Gate</option></select></div>
+  <button id="loginButton" class="primary" type="button">Start scanner</button>
+  <div id="loginError" class="errorBox hidden"></div>
+</section>
+<section id="scannerView" class="hidden">
+  <div class="card"><div class="staffBar"><div><div id="staffName" class="staffName"></div><div id="staffMeta" class="staffMeta"></div></div><button id="logoutButton" class="secondary" type="button">Sign out</button></div></div>
+  <div class="scannerCard"><div id="reader"></div><div class="scanInstruction"><strong>Point camera at ticket QR</strong>Hold the ticket steady. The scanner checks the ticket automatically.</div></div>
+  <div id="cameraError" class="errorBox hidden"></div>
+  <div id="result" class="result hidden"></div>
+  <button id="nextButton" class="primary nextButton hidden" type="button">Scan next ticket</button>
+  <div class="footer">Keep the ticket visible until the result says CHECK-IN COMPLETE.</div>
+</section>
+</main>
+</div>
+<script>
+const API_URL='https://script.google.com/macros/s/AKfycbw7BjZuMhU6SdFAsQHxgNhmHqOhZG8VM2T6bCNd-W7pKB-qOKbsUq10gipnB_6zwUK3BQ/exec';
+let staffSession=null,scanner=null,scanningLocked=false;
+const $=id=>document.getElementById(id);
+function setStatus(text,type='ready'){$('connection').textContent='● '+text;$('connection').className='status '+type}
+function esc(v){return String(v||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;')}
+function showLoginError(m){$('loginError').textContent=m;$('loginError').classList.remove('hidden')}
+function clearLoginError(){$('loginError').classList.add('hidden');$('loginError').textContent=''}
+function callApi(api,params){return new Promise((resolve,reject)=>{const cb='cb_'+Date.now()+'_'+Math.floor(Math.random()*100000);const script=document.createElement('script');const q=new URLSearchParams();q.set('api',api);q.set('callback',cb);Object.keys(params||{}).forEach(k=>q.set(k,params[k]));const timeout=setTimeout(()=>{cleanup();reject(new Error('Server request timed out.'))},20000);function cleanup(){clearTimeout(timeout);try{delete window[cb]}catch(e){}script.remove()}window[cb]=response=>{cleanup();if(response&&response.ok)resolve(response);else reject(new Error(response&&response.error?response.error:'Server request failed.'))};script.onerror=()=>{cleanup();reject(new Error('Could not connect to the check-in server.'))};script.src=API_URL+'?'+q.toString();document.body.appendChild(script)})}
+$('loginButton').addEventListener('click',async function(){clearLoginError();const staffId=$('staffId').value.trim(),pin=$('pin').value.trim(),gate=$('gate').value;if(!staffId||!pin){showLoginError('Enter your Staff ID and PIN.');return}this.disabled=true;this.textContent='Signing in…';setStatus('VERIFYING','scan');try{const r=await callApi('staffLogin',{staffId,pin,gate});staffSession={staffId:r.staffId,name:r.name,gate:r.gate,sessionToken:r.sessionToken};$('staffName').textContent=r.name+' ('+r.staffId+')';$('staffMeta').textContent=r.gate+' • Scanner ready';$('loginView').classList.add('hidden');$('scannerView').classList.remove('hidden');await startScanner()}catch(e){setStatus('READY');showLoginError(e.message||'Staff sign-in failed.')}finally{this.disabled=false;this.textContent='Start scanner'}});
+async function startScanner(){scanningLocked=false;clearResult();if(scanner){try{await scanner.clear()}catch(e){}scanner=null}scanner=new Html5Qrcode('reader');const config={fps:15,qrbox:(w,h)=>{const s=Math.floor(Math.min(w,h)*.68);return{width:Math.max(180,Math.min(s,310)),height:Math.max(180,Math.min(s,310))}},aspectRatio:1,formatsToSupport:[Html5QrcodeSupportedFormats.QR_CODE],experimentalFeatures:{useBarCodeDetectorIfSupported:true}};try{setStatus('STARTING CAMERA','scan');await scanner.start({facingMode:'environment'},config,decoded=>handleQr(decoded),()=>{});setStatus('SCANNING','scan')}catch(e){setStatus('CAMERA ERROR','error');$('cameraError').textContent='Camera could not be started. Allow camera permission in Chrome and reload this page. '+(e&&e.message?e.message:'');$('cameraError').classList.remove('hidden')}}
+async function handleQr(token){if(scanningLocked)return;token=String(token||'').trim();if(!token)return;scanningLocked=true;setStatus('VERIFYING TICKET','scan');if(scanner){try{await scanner.stop()}catch(e){}}try{const r=await callApi('checkin',{token,sessionToken:staffSession.sessionToken});renderResult(r.result)}catch(e){renderResult({result:'INVALID',message:e.message||'Check-in failed.'})}}
+function renderResult(r){let cls='bad',icon='✕',title='CHECK-IN DENIED';if(r.result==='CHECKED_IN'){cls='ok';icon='✓';title='CHECK-IN COMPLETE'}else if(r.result==='DUPLICATE'){cls='warn';icon='⚠';title='ALREADY CHECKED IN'}let html='<div class="resultIcon">'+icon+'</div><div class="resultTitle">'+title+'</div><div class="resultMeta">'+esc(r.message||'')+'</div>';if(r.holderName)html+='<div class="holder">'+esc(r.holderName)+'</div>';if(r.ticketId)html+='<div class="resultMeta mono">'+esc(r.ticketId)+'</div>';if(r.admissionCount)html+='<div class="resultMeta">'+esc(String(r.admissionCount))+' admissions</div>';if(r.checkInTime)html+='<div class="resultMeta">Checked in at '+esc(r.checkInTime)+'</div>';if(r.gate)html+='<div class="resultMeta">Gate: '+esc(r.gate)+'</div>';$('result').innerHTML=html;$('result').className='result '+cls;$('nextButton').classList.remove('hidden');setStatus(r.result==='CHECKED_IN'?'CHECK-IN COMPLETE':'SCAN RESULT',r.result==='CHECKED_IN'?'ready':'error');beep(r.result==='CHECKED_IN')}
+function clearResult(){$('result').classList.add('hidden');$('result').innerHTML='';$('nextButton').classList.add('hidden');$('cameraError').classList.add('hidden')}
+$('nextButton').addEventListener('click',async()=>{clearResult();scanningLocked=false;await startScanner()});
+$('logoutButton').addEventListener('click',async()=>{scanningLocked=true;if(scanner){try{await scanner.stop()}catch(e){}try{await scanner.clear()}catch(e){}scanner=null}staffSession=null;$('scannerView').classList.add('hidden');$('loginView').classList.remove('hidden');$('pin').value='';clearResult();setStatus('READY')});
+function beep(success){try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;const c=new C(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=success?880:220;g.gain.setValueAtTime(.0001,c.currentTime);g.gain.exponentialRampToValueAtTime(.15,c.currentTime+.01);g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+.18);o.start();o.stop(c.currentTime+.2)}catch(e){}}
+</script>
+</body>
+</html>
